@@ -550,7 +550,7 @@ function renderPriority(){
   document.getElementById("ps-end").textContent = endW.filter(cntOK).length;
   document.getElementById("ps-new").textContent = fresh.filter(cntOK).length;
   var psHeld = document.getElementById("ps-held");
-  if(MY_SEL.length){
+  if(MY_SEL.length && state.fit !== "all"){
     psHeld.textContent = held.length; psHeld.classList.remove("txt");
     document.getElementById("ps-held-lbl").textContent = "held-bank offers";
   } else {
