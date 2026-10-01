@@ -290,7 +290,7 @@ body{margin:0; background:var(--bg); color:var(--ink);
 
   <div id="briefing-main">
     <section class="sec" id="sec-priority" style="margin-top:4px">
-      <div class="sec-h"><h2>What needs attention first</h2></div>
+      <div class="sec-h"><h2>Overview</h2></div>
       <div class="pstats">
         <div class="pstat p-end"><b id="ps-end">0</b><span>ends this week</span></div>
         <div class="pstat p-new"><b id="ps-new">0</b><span>new this week</span></div>
@@ -477,6 +477,11 @@ function visOK(o){
   if(o._cat === "signup") return true;
   return fitOK(o);
 }
+function cntOK(o){
+  if(o._cat === "signup") return true;
+  if(!MY_SEL.length) return false;
+  return fitOK(o);
+}
 function matchQ(o, q){
   if(!q) return true;
   var s = (o.t+" "+o.b+" "+o.d).toLowerCase();
@@ -532,9 +537,9 @@ function renderPriority(){
   var endW = all.filter(function(o){ var dl = daysLeft(o.dt); return dl != null && dl >= 0 && dl <= 7; });
   var fresh = all.filter(function(o){ return o.n; });
   var sb = selBanks();
-  var held = all.filter(function(o){ return !MY_SEL.length || sb[o.b]; });
-  document.getElementById("ps-end").textContent = endW.filter(visOK).length;
-  document.getElementById("ps-new").textContent = fresh.filter(visOK).length;
+  var held = MY_SEL.length ? all.filter(function(o){ return sb[o.b]; }) : [];
+  document.getElementById("ps-end").textContent = endW.filter(cntOK).length;
+  document.getElementById("ps-new").textContent = fresh.filter(cntOK).length;
   document.getElementById("ps-held").textContent = held.length;
 
   var mv = document.getElementById("moves");
@@ -542,14 +547,14 @@ function renderPriority(){
     return '<div class="move"><div class="mt">' + esc(m.t) + '</div><div class="md">' + esc(m.d) + '</div></div>';
   }).join("");
 
-  var qe = endW.filter(visOK).sort(sortSoon);
+  var qe = endW.filter(cntOK).sort(sortSoon);
   document.getElementById("qc-ending").textContent = qe.length;
   var qeEl = document.getElementById("queue-ending");
   qeEl.innerHTML = qe.length ? qe.map(function(o){ return cardHTML(o, true); }).join("")
     : '<div class="empty">Nothing ending this week matches the eligibility filter.</div>';
   bindCards(qeEl);
 
-  var qf = fresh.filter(visOK).sort(sortSoon);
+  var qf = fresh.filter(cntOK).sort(sortSoon);
   document.getElementById("qc-fresh").textContent = qf.length;
   var qfEl = document.getElementById("queue-fresh");
   qfEl.innerHTML = qf.length ? qf.map(function(o){ return cardHTML(o, true); }).join("")
@@ -628,10 +633,10 @@ function renderSearch(){
 }
 
 function renderBadges(){
-  document.getElementById("bdg-briefing").textContent = allPromos().filter(visOK).length;
+  document.getElementById("bdg-briefing").textContent = allPromos().filter(cntOK).length;
   CATS.forEach(function(c){
     var el = document.getElementById("bdg-" + c[0]);
-    if(el) el.textContent = DB[c[0]].filter(visOK).length;
+    if(el) el.textContent = DB[c[0]].filter(cntOK).length;
   });
 }
 
