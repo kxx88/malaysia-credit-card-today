@@ -573,7 +573,7 @@ function renderPriority(){
   bindCards(qfEl);
 }
 
-function dirBanks(cat){ return Array.from(new Set(DB[cat].map(function(o){ return o.b; }))).sort(); }
+function dirBanks(cat){ return Array.from(new Set(DB[cat].filter(visOK).map(function(o){ return o.b; }))).sort(); }
 
 function renderDirectory(){
   var cat = state.dirCat;
