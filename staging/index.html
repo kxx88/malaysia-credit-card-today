@@ -541,14 +541,14 @@ function renderPriority(){
   document.getElementById("ps-new").textContent = fresh.filter(cntOK).length;
   document.getElementById("ps-held").textContent = held.length;
 
-  var qe = endW.filter(cntOK).sort(sortSoon);
+  var qe = endW.filter(visOK).sort(sortSoon);
   document.getElementById("qc-ending").textContent = qe.length;
   var qeEl = document.getElementById("queue-ending");
   qeEl.innerHTML = qe.length ? qe.map(function(o){ return cardHTML(o, true); }).join("")
     : '<div class="empty">Nothing ending this week matches the eligibility filter.</div>';
   bindCards(qeEl);
 
-  var qf = fresh.filter(cntOK).sort(sortSoon);
+  var qf = fresh.filter(visOK).sort(sortSoon);
   document.getElementById("qc-fresh").textContent = qf.length;
   var qfEl = document.getElementById("queue-fresh");
   qfEl.innerHTML = qf.length ? qf.map(function(o){ return cardHTML(o, true); }).join("")
