@@ -661,6 +661,7 @@ function syncTabs(){
 }
 
 
+var _selWasEmpty = false;
 function syncEligUI(){
   document.getElementById("mypick-n").textContent = MY_SEL.length;
   var dis = !MY_SEL.length;
@@ -670,7 +671,12 @@ function syncEligUI(){
     state.fit = "all";
     document.getElementById("fit-all").classList.add("on");
     document.getElementById("fit-mine").classList.remove("on");
+  } else if(_selWasEmpty){
+    state.fit = "mine";
+    document.getElementById("fit-mine").classList.add("on");
+    document.getElementById("fit-all").classList.remove("on");
   }
+  _selWasEmpty = dis;
   document.getElementById("fithint").hidden = !dis;
 }
 var cpType = {conv: false, isl: false};
