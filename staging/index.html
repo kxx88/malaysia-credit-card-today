@@ -467,10 +467,15 @@ function fitOf(o){
 var state = {fit:"mine", q:"", dirOpen:false, dirCat:"dining", bank:{}, my:{},
   sort:{dining:"soon", movies:"soon", travel:"soon", signup:"az", extra:"soon"}};
 
+CATS.forEach(function(c){ (DB[c[0]] || []).forEach(function(o){ o._cat = c[0]; }); });
 function allPromos(){ return DB.dining.concat(DB.movies, DB.travel, DB.signup, DB.extra||[]); }
 function fitOK(o){
   if(state.fit === "all") return true;
   return fitOf(o) !== "excluded";
+}
+function visOK(o){
+  if(o._cat === "signup") return true;
+  return fitOK(o);
 }
 function matchQ(o, q){
   if(!q) return true;
@@ -528,8 +533,8 @@ function renderPriority(){
   var fresh = all.filter(function(o){ return o.n; });
   var sb = selBanks();
   var held = all.filter(function(o){ return !MY_SEL.length || sb[o.b]; });
-  document.getElementById("ps-end").textContent = endW.length;
-  document.getElementById("ps-new").textContent = fresh.length;
+  document.getElementById("ps-end").textContent = endW.filter(visOK).length;
+  document.getElementById("ps-new").textContent = fresh.filter(visOK).length;
   document.getElementById("ps-held").textContent = held.length;
 
   var mv = document.getElementById("moves");
@@ -537,14 +542,14 @@ function renderPriority(){
     return '<div class="move"><div class="mt">' + esc(m.t) + '</div><div class="md">' + esc(m.d) + '</div></div>';
   }).join("");
 
-  var qe = endW.filter(fitOK).sort(sortSoon);
+  var qe = endW.filter(visOK).sort(sortSoon);
   document.getElementById("qc-ending").textContent = qe.length;
   var qeEl = document.getElementById("queue-ending");
   qeEl.innerHTML = qe.length ? qe.map(function(o){ return cardHTML(o, true); }).join("")
     : '<div class="empty">Nothing ending this week matches the eligibility filter.</div>';
   bindCards(qeEl);
 
-  var qf = fresh.filter(fitOK).sort(sortSoon);
+  var qf = fresh.filter(visOK).sort(sortSoon);
   document.getElementById("qc-fresh").textContent = qf.length;
   var qfEl = document.getElementById("queue-fresh");
   qfEl.innerHTML = qf.length ? qf.map(function(o){ return cardHTML(o, true); }).join("")
@@ -570,7 +575,7 @@ function renderDirectory(){
   if(Object.keys(bs).length || state.my[cat]) chips += '<button class="bchip clear" data-clear="1">✕ Clear</button>';
   document.getElementById("dir-chips").innerHTML = chips;
 
-  var arr = DB[cat].filter(fitOK);
+  var arr = DB[cat].filter(visOK);
   if(state.my[cat]){ var sb2 = selBanks(); arr = arr.filter(function(o){ return sb2[o.b]; }); }
   if(Object.keys(bs).length) arr = arr.filter(function(o){ return bs[o.b]; });
   arr.sort(state.sort[cat] === "az" ? sortAZ : sortSoon);
@@ -615,7 +620,7 @@ function renderSearch(){
   if(!q){ rs.hidden = true; main.style.display = ""; return; }
   rs.hidden = false; main.style.display = "none";
   document.getElementById("results-h").textContent = 'Results for "' + q + '"';
-  var hits = allPromos().filter(function(o){ return fitOK(o) && matchQ(o, q); }).sort(sortSoon).slice(0, 40);
+  var hits = allPromos().filter(function(o){ return visOK(o) && matchQ(o, q); }).sort(sortSoon).slice(0, 40);
   var rl = document.getElementById("results");
   rl.innerHTML = hits.length ? hits.map(function(o){ return cardHTML(o, false); }).join("")
     : '<div class="empty">No promos match "' + esc(q) + '".</div>';
@@ -623,10 +628,10 @@ function renderSearch(){
 }
 
 function renderBadges(){
-  document.getElementById("bdg-briefing").textContent = allPromos().length;
+  document.getElementById("bdg-briefing").textContent = allPromos().filter(visOK).length;
   CATS.forEach(function(c){
     var el = document.getElementById("bdg-" + c[0]);
-    if(el) el.textContent = DB[c[0]].length;
+    if(el) el.textContent = DB[c[0]].filter(visOK).length;
   });
 }
 
