@@ -296,7 +296,6 @@ body{margin:0; background:var(--bg); color:var(--ink);
         <div class="pstat p-new"><b id="ps-new">0</b><span>new this week</span></div>
         <div class="pstat p-held"><b id="ps-held">0</b><span>held-bank offers</span></div>
       </div>
-      <div class="moves" id="moves"></div>
       <div class="queue open" id="q-ending">
         <button class="qhead" aria-expanded="true"><span class="qt">Ends this week</span><span class="qcount" id="qc-ending">0</span><span class="chev">›</span></button>
         <div class="qbody" id="queue-ending"></div>
@@ -541,11 +540,6 @@ function renderPriority(){
   document.getElementById("ps-end").textContent = endW.filter(cntOK).length;
   document.getElementById("ps-new").textContent = fresh.filter(cntOK).length;
   document.getElementById("ps-held").textContent = held.length;
-
-  var mv = document.getElementById("moves");
-  mv.innerHTML = (DB.moves || []).map(function(m){
-    return '<div class="move"><div class="mt">' + esc(m.t) + '</div><div class="md">' + esc(m.d) + '</div></div>';
-  }).join("");
 
   var qe = endW.filter(cntOK).sort(sortSoon);
   document.getElementById("qc-ending").textContent = qe.length;
