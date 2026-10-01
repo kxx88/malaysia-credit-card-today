@@ -78,6 +78,7 @@ body{margin:0; background:var(--bg); color:var(--ink);
 .pstat{flex:1; padding:12px 14px; text-align:left}
 .pstat + .pstat{border-left:1px solid var(--line)}
 .pstat b{display:block; font-size:21px; font-weight:700; letter-spacing:-.02em}
+.pstat b.txt{font-size:15px; padding-top:5px}
 .pstat span{font-size:11.5px; color:var(--ink2); font-weight:600}
 .pstat.p-end b{color:var(--red)} .pstat.p-new b{color:var(--gold)} .pstat.p-held b{color:var(--navy)}
 [data-theme="dark"] .pstat.p-held b{color:var(--ink)}
@@ -298,7 +299,7 @@ body{margin:0; background:var(--bg); color:var(--ink);
       <div class="pstats">
         <div class="pstat p-end"><b id="ps-end">0</b><span>ends this week</span></div>
         <div class="pstat p-new"><b id="ps-new">0</b><span>new this week</span></div>
-        <div class="pstat p-held"><b id="ps-held">0</b><span>held-bank offers</span></div>
+        <div class="pstat p-held"><b id="ps-held">0</b><span id="ps-held-lbl">held-bank offers</span></div>
       </div>
       <div class="queue open" id="q-ending">
         <button class="qhead" aria-expanded="true"><span class="qt">Ends this week</span><span class="qcount" id="qc-ending">0</span><span class="chev">›</span></button>
@@ -544,7 +545,14 @@ function renderPriority(){
   var held = MY_SEL.length ? all.filter(function(o){ return sb[o.b]; }) : [];
   document.getElementById("ps-end").textContent = endW.filter(cntOK).length;
   document.getElementById("ps-new").textContent = fresh.filter(cntOK).length;
-  document.getElementById("ps-held").textContent = held.length;
+  var psHeld = document.getElementById("ps-held");
+  if(MY_SEL.length){
+    psHeld.textContent = held.length; psHeld.classList.remove("txt");
+    document.getElementById("ps-held-lbl").textContent = "held-bank offers";
+  } else {
+    psHeld.textContent = "Showing All"; psHeld.classList.add("txt");
+    document.getElementById("ps-held-lbl").textContent = "Bank offers";
+  }
 
   var qe = endW.filter(visOK).sort(sortSoon);
   document.getElementById("qc-ending").textContent = qe.length;
@@ -655,9 +663,9 @@ function syncEligUI(){
   document.getElementById("fit-mine").disabled = dis;
   document.getElementById("fit-all").disabled = dis;
   if(dis){
-    state.fit = "mine";
-    document.getElementById("fit-mine").classList.add("on");
-    document.getElementById("fit-all").classList.remove("on");
+    state.fit = "all";
+    document.getElementById("fit-all").classList.add("on");
+    document.getElementById("fit-mine").classList.remove("on");
   }
   document.getElementById("fithint").hidden = !dis;
 }
