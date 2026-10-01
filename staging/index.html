@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Credit Card Briefing</title>
+<style>
+:root{
+  --ink:#1a1d21; --ink2:#5b6470; --ink3:#8a94a0;
+  --bg:#f2f4f7; --card:#ffffff; --line:#e6eaf0;
+  --bar:rgba(255,255,255,.94); --field:#eef1f5; --mixbase:#ffffff;
+  --red:#c8102e; --amber:#b45309; --green:#0a6c4f; --blue:#0b5cad;
+  --r:14px;
+}
+[data-theme="dark"]{
+  --ink:#e9ebee; --ink2:#a7b0ba; --ink3:#6d7681;
+  --bg:#101214; --card:#1a1d21; --line:#2b3038;
+  --bar:rgba(22,24,28,.94); --field:#24292f; --mixbase:#1a1d21;
+  --red:#f0526a; --amber:#e8a33d; --green:#3fb97f; --blue:#5b9cf5;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+  font-size:15px; line-height:1.45; padding-bottom:calc(76px + env(safe-area-inset-bottom));}
+.wrap{max-width:660px; margin:0 auto; padding:0 12px}
+
+/* ---------- top app bar ---------- */
+.appbar{position:sticky; top:0; z-index:50; background:var(--bar);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);}
+.appbar .wrap{padding-top:10px; padding-bottom:10px}
+.brandrow{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px}
+.brand{font-size:19px; font-weight:800; letter-spacing:-.02em; color:var(--ink)}
+.brand .dot{color:var(--red)}
+.dateline{font-size:12.5px; color:var(--ink2); font-weight:600}
+.searchbox{position:relative}
+.searchbox input{width:100%; padding:11px 38px 11px 38px; font-size:15px; color:var(--ink);
+  background:var(--field); border:1px solid transparent; border-radius:12px; outline:none;}
+.searchbox input::placeholder{color:var(--ink3)}
+.searchbox input:focus{background:var(--card); border-color:var(--blue); color:var(--ink)}
+.searchbox .sicon{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--ink3); pointer-events:none; display:flex}
+.searchbox .sclear{position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  border:0; background:transparent; color:var(--ink3); font-size:20px; line-height:1;
+  width:30px; height:30px; border-radius:50%; cursor:pointer; display:none}
+.searchbox .sclear.on{display:block}
+
+/* ---------- stat strip ---------- */
+.stats{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:14px 0}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  padding:12px 10px; text-align:center; cursor:pointer; color:var(--ink)}
+.stat b{display:block; font-size:22px; font-weight:800; letter-spacing:-.02em}
+.stat span{font-size:11.5px; color:var(--ink2); font-weight:600}
+.stat:active{transform:scale(.96)}
+.cardhead:active{opacity:.85}
+.stat.s-new b{color:var(--red)} .stat.s-end b{color:var(--amber)} .stat.s-all b{color:var(--blue)}
+
+/* ---------- sections ---------- */
+.sec{margin:20px 0}
+.sec-h{display:flex; align-items:center; justify-content:space-between; margin:0 2px 10px}
+.sec-h h2{font-size:16.5px; font-weight:800; margin:0; letter-spacing:-.01em; color:var(--ink)}
+.sec-h .more{font-size:12.5px; color:var(--blue); font-weight:700; background:none; border:0; cursor:pointer; padding:4px}
+
+/* ---------- move cards ---------- */
+.move{background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  padding:13px 14px 13px 12px; margin-bottom:10px; display:flex; gap:12px; color:var(--ink)}
+.move .n{flex:0 0 26px; height:26px; border-radius:50%; background:var(--ink); color:var(--bg);
+  font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-top:1px}
+.move .t{font-weight:750; font-size:14.5px; margin-bottom:3px; color:var(--ink)}
+.move .s{font-size:13.5px; color:var(--ink2)}
+
+/* ---------- promo cards ---------- */
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  margin-bottom:10px; overflow:hidden; color:var(--ink)}
+.cardhead{width:100%; text-align:left; background:none; border:0; padding:13px 14px;
+  cursor:pointer; display:block; color:var(--ink)}
+.cardhead .topline{display:flex; align-items:flex-start; gap:8px}
+.cardhead .ct{flex:1; font-weight:700; font-size:14.5px; line-height:1.35; color:var(--ink)}
+.cardhead .chev{flex:0 0 auto; color:var(--ink3); font-size:18px; line-height:1.2; transition:transform .18s}
+.card.open .cardhead .chev{transform:rotate(90deg)}
+.cardhead .ones{font-size:13px; color:var(--ink2); margin-top:5px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.card.open .cardhead .ones{display:block; -webkit-line-clamp:unset}
+.metarow{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px}
+.bankchip{font-size:11px; font-weight:800; letter-spacing:.02em; padding:3px 9px; border-radius:999px;
+  background:color-mix(in srgb, var(--bc,#5b6470) 14%, var(--mixbase)); color:var(--bc,#5b6470);
+  border:1px solid color-mix(in srgb, var(--bc,#5b6470) 30%, var(--mixbase))}
+.datepill{font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px;
+  background:var(--field); color:var(--ink2)}
+.datepill.soon{background:#fef3e2; color:var(--amber)}
+.datepill.urgent{background:#fde8ea; color:var(--red)}
+.tagnew{font-size:10.5px; font-weight:800; letter-spacing:.04em; color:#fff; background:var(--red);
+  border-radius:6px; padding:2px 7px; white-space:nowrap}
+.tagwarn{font-size:11px; font-weight:700; color:var(--amber); background:#fef3e2;
+  border-radius:6px; padding:3px 8px}
+.elig{font-size:11px; font-weight:600; color:var(--ink2); background:var(--field);
+  border-radius:6px; padding:3px 8px}
+.cardbody a{color:var(--blue); font-weight:600; text-decoration:none; word-break:break-all}
+.cardbody a:hover{text-decoration:underline}
+.src{font-size:11.5px; color:var(--ink3); margin-top:8px}
+
+/* ---------- ending-soon rows ---------- */
+.erow{display:flex; align-items:center; gap:10px; background:var(--card);
+  border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:8px;
+  cursor:pointer; color:var(--ink); width:100%; text-align:left; font-size:14px}
+.erow .et{flex:1; font-weight:650; font-size:13.5px; color:var(--ink)}
+.erow .et small{display:block; font-weight:500; color:var(--ink2); font-size:12px}
+
+/* ---------- finder filter rows ---------- */
+.ftools{margin:12px 0 4px}
+.bchips{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:8px}
+.bchip{border:1px solid var(--line); background:var(--card); color:var(--ink2);
+  font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:999px; cursor:pointer}
+.bchip.on{background:var(--ink); border-color:var(--ink); color:#fff}
+.bchip.clear{border-style:dashed; color:var(--red)}
+.bchip.my{border-color:var(--green); color:var(--green)}
+.bchip.my.on{background:var(--green); border-color:var(--green); color:#fff}
+.frow{display:flex; align-items:center; justify-content:space-between; margin:6px 2px 10px}
+.fcount{font-size:12.5px; color:var(--ink2); font-weight:600}
+.fsort{font-size:12.5px; font-weight:700; color:var(--ink); background:var(--card);
+  border:1px solid var(--line); border-radius:9px; padding:6px 8px}
+.fhelp{font-size:11.5px; color:var(--ink3); margin:0 2px 12px}
+
+/* ---------- collapsible groups ---------- */
+.group{background:var(--card); border:1px solid var(--line); border-radius:var(--r); margin-bottom:10px; overflow:hidden}
+.ghead{width:100%; display:flex; align-items:center; gap:10px; padding:13px 14px;
+  background:none; border:0; cursor:pointer; text-align:left; color:var(--ink)}
+.ghead .gt{flex:1; font-weight:750; font-size:14.5px; color:var(--ink)}
+.ghead .gcount{font-size:11.5px; font-weight:800; background:var(--field); color:var(--ink2);
+  border-radius:999px; padding:2px 9px; white-space:nowrap}
+.ghead .chev{color:var(--ink3); font-size:18px; transition:transform .18s}
+.group.open .ghead .chev{transform:rotate(90deg)}
+.gbody{display:none; padding:2px 10px 10px}
+.group.open .gbody{display:block}
+.gbody .card{margin-bottom:8px; border-color:var(--line)}
+
+/* ---------- bottom tab bar ---------- */
+.tabbar{position:fixed; left:0; right:0; bottom:0; z-index:60;
+  background:var(--bar); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tabbar .tabs{max-width:660px; margin:0 auto; display:grid; grid-template-columns:repeat(5,1fr)}
+.tabbtn{position:relative; border:0; background:none; padding:9px 2px 10px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-size:10.5px; font-weight:700; color:var(--ink3)}
+.tabbtn .ic{font-size:20px; line-height:1}
+.tabbtn.on{color:var(--ink)}
+.tabbtn.on::before{content:""; position:absolute; top:0; left:26%; right:26%; height:3px;
+  border-radius:0 0 4px 4px; background:var(--ink)}
+.tabbtn .bdg{position:absolute; top:4px; right:calc(50% - 24px); min-width:18px; height:18px;
+  border-radius:9px; background:var(--red); color:#fff; font-size:10.5px; font-weight:800;
+  display:flex; align-items:center; justify-content:center; padding:0 5px}
+.tabbtn .bdg.dim{background:#c3cad4}
+
+.empty{background:var(--card); border:1px dashed var(--line); border-radius:var(--r);
+  padding:26px 18px; text-align:center; color:var(--ink3); font-size:13.5px}
+.stale{background:#fef3e2; border:1px solid #f3d9a8; color:#7c4a03; border-radius:12px;
+  padding:10px 14px; margin:12px 0 0; font-size:13px; font-weight:600}
+[data-theme="dark"] .stale{background:#2b2113; border-color:#5a451f; color:#e8a33d}
+.daterange{font-size:12.5px; color:var(--ink2); font-weight:600; margin-bottom:10px}
+.cardbody{display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .22s ease, opacity .18s ease;
+  border-top:0 solid var(--line)}
+.cardbody .cbin{overflow:hidden; min-height:0}
+.card.open .cardbody{grid-template-rows:1fr; opacity:1; border-top-width:1px; border-top-style:dashed}
+.card.open .cardbody .cbin{padding:12px 0 14px}
+.cardbody .full{margin-bottom:2px; font-size:13.5px; color:var(--ink2)}
+.expandall{font-size:12.5px; font-weight:700; color:var(--blue); background:none; border:0; cursor:pointer; padding:6px 8px}
+.vh{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+
+.view{display:none}
+.view.on{display:block; animation:fadein .18s ease}
+@keyframes fadein{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+
+:focus-visible{outline:2px solid var(--blue); outline-offset:2px; border-radius:6px}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="brand">💳 Credit Card Briefing</div>
+      <div style="display:flex; align-items:center; gap:10px">
+        <div class="dateline" id="dateline"></div>
+        <button id="themebtn" aria-label="Toggle dark mode" style="border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; width:34px; height:34px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center">🌙</button>
+      </div>
+    </div>
+    <div class="searchbox">
+      <label class="vh" for="q">Search promos</label>
+      <span class="sicon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+      <input id="q" type="search" placeholder="Search promos…" autocomplete="off" aria-label="Search promos">
+      <button type="button" class="sclear" id="qclear" aria-label="Clear search">&times;</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div id="stalebanner" class="stale" hidden></div></div>
+
+<main class="wrap">
+  <!-- ============ BRIEFING ============ -->
+  <section class="view on" id="view-briefing">
+    <div class="stats">
+      <button class="stat s-new" data-goto="sec-fresh"><b id="st-new">0</b><span>🆕 New</span></button>
+      <button class="stat s-end" data-goto="sec-ending"><b id="st-end">0</b><span>⏰ Ending ≤30d</span></button>
+      <button class="stat s-all"><b id="st-all">0</b><span>📚 Tracked</span></button>
+    </div>
+
+    <div class="sec" id="sec-fresh">
+      <div class="sec-h"><h2>🆕 New since last check</h2></div>
+      <div id="fresh"></div>
+    </div>
+
+    <div class="sec" id="sec-ending">
+      <div class="sec-h"><h2>⏰ Ending soon</h2><button class="more" data-tab="travel">view all →</button></div>
+      <div id="ending"></div>
+      <p class="fhelp">Date pills show time left — red ends within 7 days · amber within 30 days. Dates are campaign end dates; unverified-date promos are counted in totals but not shown.</p>
+    </div>
+
+    <div class="sec" id="sec-results" hidden>
+      <div class="sec-h"><h2>🔍 Results</h2></div>
+      <div id="results"></div>
+    </div>
+  </section>
+
+  <!-- ============ DINING ============ -->
+  <section class="view" id="view-dining">
+    <div class="ftools">
+      <div class="bchips" id="dining-chips"></div>
+      <div class="frow"><div class="fcount" id="dining-count"></div>
+        <div style="display:flex; align-items:center; gap:4px">
+          <button class="expandall" id="dining-expand">Expand all</button>
+          <select class="fsort" id="dining-sort" aria-label="Sort dining offers">
+            <option value="soon">Soonest first</option><option value="az">A–Z</option>
+          </select>
+        </div></div>
+      <p class="fhelp">Grouped by restaurant — tap a restaurant to see its offers. Search scans restaurant, bank and offer text.</p>
+    </div>
+    <div id="dining-list"></div>
+  </section>
+
+  <!-- ============ MOVIES ============ -->
+  <section class="view" id="view-movies">
+    <div class="ftools">
+      <div class="bchips" id="movies-chips"></div>
+      <div class="frow"><div class="fcount" id="movies-count"></div>
+        <select class="fsort" id="movies-sort" aria-label="Sort movie offers">
+          <option value="soon">Soonest first</option><option value="az">A–Z</option>
+        </select></div>
+      <p class="fhelp">GSC / TGV ticket deals and discounts. Search scans cinema, bank and offer text.</p>
+    </div>
+    <div id="movies-list"></div>
+  </section>
+
+  <!-- ============ TRAVEL ============ -->
+  <section class="view" id="view-travel">
+    <div class="ftools">
+      <div class="bchips" id="travel-chips"></div>
+      <div class="frow"><div class="fcount" id="travel-count"></div>
+        <select class="fsort" id="travel-sort" aria-label="Sort travel offers">
+          <option value="soon">Soonest first</option><option value="az">A–Z</option>
+        </select></div>
+      <p class="fhelp">Flights, hotels, lounge and travel-package deals. Search scans title, bank and offer text.</p>
+    </div>
+    <div id="travel-list"></div>
+  </section>
+
+  <!-- ============ SIGN-UP ============ -->
+  <section class="view" id="view-signup">
+    <div class="ftools">
+      <div class="frow"><div class="fcount" id="signup-count"></div>
+        <select class="fsort" id="signup-sort" aria-label="Sort sign-up offers">
+          <option value="az">A–Z</option><option value="soon">Soonest first</option>
+        </select></div>
+      <p class="fhelp">Welcome offers for banks you don't hold — grouped by bank. Each campaign shows both application channels.</p>
+    </div>
+    <div id="signup-list"></div>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Digest sections">
+  <div class="tabs" role="tablist">
+    <button class="tabbtn on" data-tab="briefing" role="tab" aria-selected="true"><span class="ic">📰</span>Briefing<span class="bdg" id="bdg-briefing" hidden></span></button>
+    <button class="tabbtn" data-tab="dining" role="tab" aria-selected="false"><span class="ic">🍽️</span>Dining<span class="bdg dim" id="bdg-dining"></span></button>
+    <button class="tabbtn" data-tab="movies" role="tab" aria-selected="false"><span class="ic">🎬</span>Movies<span class="bdg dim" id="bdg-movies"></span></button>
+    <button class="tabbtn" data-tab="travel" role="tab" aria-selected="false"><span class="ic">✈️</span>Travel<span class="bdg dim" id="bdg-travel"></span></button>
+    <button class="tabbtn" data-tab="signup" role="tab" aria-selected="false"><span class="ic">🎁</span>Sign-up<span class="bdg dim" id="bdg-signup"></span></button>
+  </div>
+</nav>
+
+<script>
+var DB = {"meta": {"date": "1 Oct 2026", "weekday": "Thursday", "updated": "11:43 AM"}, "moves": [{"t": "Digest fully rebuilt — fresh pull, database replaced", "d": "User-ordered fresh run: all 7 bank feeds re-pulled with caches bypassed (AFFIN 68, Hong Leong 215, CIMB 317, Alliance 22, Public Bank 125, AmBank 32, Maybank 905), zero FETCH FAILED lines, and the hosted database was wiped and replaced with this single snapshot (154 promos). First run to apply the eligibility pass to the whole digest: every promo now carries eligible-card data — source-named cards where the feed provides them, the 'all <Bank> cards' fallback otherwise."}, {"t": "4 new promos started today (1 Oct)", "d": "Public Bank: Ocean's Catch seafood dinner buffet deal at Sheraton Petaling Jaya Hotel (to 28 Nov) and PB Privileges @ 100glasses (to 31 Mar 2027). AmBank relaunched two acquisition offers to 31 Mar 2027: BonusLink Visa welcome offer up to 45,000 BonusLink Points, and RM100 cashback for online Visa applications (spend within 60 days of approval)."}, {"t": "Maybank RM10,000 travel-voucher spend contest is now live", "d": "Announced yesterday, the contest period runs 1 Oct–31 Dec 2026: spend ≥RM1,000/month on a Maybank card for entries toward the RM10,000 travel voucher grand prize."}, {"t": "Ending this week: OCBC sign-up iPhone 17 Pro (5 Oct)", "d": "Via RinggitPlus/CompareHero: iPhone 17 Pro for every 38th qualified applicant (capped at 3 units); RM600 TNG guaranteed with balance transfer ≥ RM10,000, RM400 with BT < RM10,000, RM200 to other qualifiers. Activate + spend RM100 within 60 days. You don't hold OCBC — flagging for completeness."}, {"t": "Coverage: no gaps; nothing new since the 11am check", "d": "The fresh fetch is line-identical to the 11am pull for AFFIN, Hong Leong, CIMB, AmBank and Maybank. Alliance's extraction surfaced 5 older listings (HYROX blind box — already tracked; Korea attractions; SofaX mattress; the monthly-deals page; a debit-card campaign) — none newly announced, none flagged. Public Bank rotated in a long-running eWallet top-up cashback (Visa, to 31 Oct) and rotated out the ZEEKR listing — neither enters the finders. Eligibility gaps in the source feeds: AFFIN and Hong Leong listings carry no card data at all, and Public Bank detail pages yielded no eligibility snippets (0/125) — those promos use the documented fallback. Extra bucket check: 3 items (Maybank spend contest, HLB iPhone 18 Pro accessories voucher, PB 100glasses) — no coherent new category accumulating, none proposed."}], "dining": [{"t": "Tony Roma's Malaysia", "b": "CIMB", "d": "10% off total bill with minimum RM100 spend in a single receipt, dine-in or takeaway", "dt": "1 Jan 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/894155/1-january-31-december-2026-tony-romas-malaysia-enjoy-10-off-total-bill-with-cimb-card-dine-in-or-takeaway-year-long-promotion/", "vo": false, "ec": ["all CIMB cards"]}, {"t": "The Manhattan FISH MARKET", "b": "CIMB", "d": "10% off total bill with minimum RM100 spend, dine-in or takeaway (excludes Piccadilly Green Town Ipoh)", "dt": "1 Jan 2026 - 31 Dec 2026", "l": "https://www.syioknya.com/promotion/the-manhattan-fish-market-cimb-cards-promotion-january-2026", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Marrybrown", "b": "CIMB", "d": "10% off total bill (capped at RM10 discount) with minimum RM35 spend, dine-in or takeaway at selected outlets", "dt": "1 Jan 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/894149/1-january-31-december-2026-marrybrown-cimb-promotion-enjoy-10-off-total-bill-with-minimum-spend-perfect-for-family-meals-and-comfort-food-saving/", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Kenangan Coffee", "b": "CIMB", "d": "10% off handcrafted drinks with no minimum spend, stores nationwide (excludes airports)", "dt": "1 Jan 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/894161/1-january-31-december-2026-kenangan-coffee-cimb-promotion-10-off-handcrafted-drinks-great-coffee-great-savings/", "vo": false, "ec": ["all CIMB cards"]}, {"t": "San Francisco Coffee", "b": "CIMB", "d": "15% off regular-priced food and beverages with no minimum spend, dine-in or takeaway (excludes Sunway Lagoon)", "dt": "20 Jan 2026 - 31 Dec 2026", "l": "https://www.syioknya.com/promotion/san-francisco-coffee-cimb-promotion-january-2026", "vo": false, "ec": ["all CIMB cards"]}, {"t": "TGI Fridays", "b": "CIMB", "d": "15% off total bill with minimum RM100 spend in a single receipt, dine-in only", "dt": "18 Sep 2025 - 30 Dec 2026", "l": "https://www.syioknya.com/promotion/tgi-fridays-cimb-cards-promotion-sep-2025", "vo": false, "ec": ["all CIMB cards"]}, {"t": "MyeongDong Topokki", "b": "CIMB", "d": "Free Topokki (worth RM9.90) with minimum RM50 spend in a single receipt, dine-in only, one per receipt", "dt": "27 Oct 2025 - 27 Oct 2026", "l": "https://www.syioknya.com/promotion/myeongdong-topokki-cimb-cards-promotion-free-topokki-october-2025-october-2026", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Dunkin' Donuts", "b": "CIMB", "d": "Coffee & Donut or Chocolate & Donut set RM12 (NP RM16.30); Box of 6 donuts RM19.50 (NP RM24.80), outlets nationwide (excludes airports)", "dt": "1 Jan 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/895334/1-january-31-december-2026-dunkin-donuts-cimb-cards-exclusive-promotion-donuts-drinks-from-rm1/", "vo": false, "ec": ["all CIMB cards"]}, {"t": "InterContinental Kuala Lumpur (Ampang Park)", "b": "CIMB", "d": "Up to 20% off dining (plus 10% off room stay), pay with CIMB credit or debit card", "dt": "2 Feb 2026 - 30 Dec 2026", "l": "https://www.everydayonsales.com/899154/2-february-30-december-2026-intercontinental-kuala-lumpur-up-to-20-off-dining-and-10-off-room-stay-promotion-for-cimb-cardholders-at-ampang-park/", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Kintry (online food orders)", "b": "CIMB", "d": "10% off online food orders with minimum RM50 spend using promo code CIMBTY25, one-time redemption per order", "dt": "1 Dec 2025 - 30 Nov 2026", "l": "https://www.everydayonsales.com/904834/1-december-2025-30-november-2026-kintry-enjoy-10-off-with-cimb-cards-online-promotion-for-food-orders/", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Palate Restaurant (Hospital Picaso, PJ)", "b": "Hong Leong", "d": "10% OFF Food & Beverages, dine-in only", "dt": "10 Feb 2026 - 31 Dec 2026", "l": "https://www.hospitalpicaso.com/en/packages/promotions/exclusive-hong-leong-bank-cardholder-privileges/", "vo": false, "ec": ["all Hong Leong cards"]}, {"t": "Jothy's Fish Head Curry Banana Leaf Restaurant", "b": "Hong Leong", "d": "10% OFF total bill (minimum spend RM100)", "dt": "1 May 2026 - 30 Apr 2027", "l": "https://www.hlb.com.my/content/dam/hlb/my/images/Promotions/2025/hlb-card-offers/tnc/jothys-fish.pdf", "vo": false, "ec": ["all Hong Leong cards"]}, {"t": "Love Baba Nyonya Restaurant", "b": "Hong Leong", "d": "10% OFF total bill + complimentary chendul each visit + RM30 birthday-month rebate", "dt": "1 Jul 2026 - 30 Jun 2027", "l": "https://www.hlb.com.my/content/dam/hlb/my/images/Promotions/2025/hlb-card-offers/tnc/lovebaba.pdf", "vo": false, "ec": ["all Hong Leong cards"]}, {"t": "Salad Atelier", "b": "Hong Leong", "d": "10% OFF total order, promo code BANK10", "dt": "to 31 Jan 2027", "l": "https://ringgitplus.com/en/credit-card/", "vo": false, "ec": ["all Hong Leong cards"]}, {"t": "Premium Royaltea", "b": "Hong Leong", "d": "20% OFF Royaltea beverages (minimum purchase of 2 drinks)", "dt": "15 Apr 2026 - 14 Apr 2027", "l": "https://www.hlb.com.my/content/dam/hlb/my/images/Promotions/2025/hlb-card-offers/tnc/premium-royaltea.pdf", "vo": false, "ec": ["all Hong Leong cards"]}, {"t": "Chef Wan Group of Restaurants", "b": "AFFIN", "d": "Up to 15% OFF with AFFIN Cards", "dt": "to 31 May 2027", "l": "https://www.affinalways.com/bm/promotions?product_filter=wealth_deposit", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Kenangan Coffee", "b": "AFFIN", "d": "Buy 1 Get 1 any drink every Thursday (minimum spend RM20; ShopeeFood in-app orders only)", "dt": "to 26 Nov 2026", "l": "https://ringgitplus.com/en/credit-card/", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Indah Cafe", "b": "AFFIN", "d": "Up to 15% OFF dine-in food and drinks (minimum spend RM50): 15% with AFFIN BORNEO Credit Card; 10% with all other AFFIN cards incl. Duo Plus Visa Signature", "dt": "1 Nov 2025 - 31 Oct 2026", "l": "https://www.affinalways.com/storage/ckeditor_uploads/discover_promotion//Terms and Condition Indah Cafe-ENG_1773647805.pdf", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Jo's Cha", "b": "AFFIN", "d": "RM6 OFF (minimum spend RM20; in-store only)", "dt": "15 Jan 2026 - 14 Jan 2027", "l": "https://www.affinalways.com/storage/ckeditor_uploads/discover_promotion/TC%20ENG_Jos%20Cha_1771986826.pdf", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Bar.B.Q Plaza", "b": "AFFIN", "d": "10% OFF a la carte items (weekdays only, excluding weekends and public holidays)", "dt": "15 Nov 2025 - 14 Nov 2026", "l": "https://www.affinalways.com/storage/TnC/TnC-Bar-B-Q-Plaza-Eng.pdf", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Krata-B", "b": "AFFIN", "d": "Savour the Malaysia and Thai Twist - offer for AFFIN Credit Cardmembers", "dt": "to 14 Nov 2026", "l": "https://www.affinalways.com/bm/promotions?product_filter=cards", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Narumi Izakaya", "b": "AFFIN", "d": "15% OFF normal-priced a la carte items, no minimum spend (dine-in at Promenade Hotel Kota Kinabalu)", "dt": "1 Mar 2026 - 31 Dec 2026", "l": "https://www.affinalways.com/storage/ckeditor_uploads/discover_promotion//TC (ENG) - Narumi Izakaya_Final_1784167336.pdf", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Sutera Harbour F&B outlets (The Pacific Sutera Hotel, The Magellan Sutera Resort, Sutera Harbour Marina, Golf & Country Club)", "b": "AFFIN", "d": "20% OFF food, dine-in only", "dt": "dates unverified", "l": "https://www.suteraharbour.com/special-offers/affin-bank-x-sutera-harbour/", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "Velvet Restaurant (GSC)", "b": "Alliance", "d": "20% off dine-in at Velvet Restaurant (no minimum spend) and 50% off Velvet by GSC movie tickets", "dt": "1 Apr - 31 Dec 2026", "l": "https://www.gsc.com.my/promotion/50-off-velvet-x-alliance-bank-movie-ticket/", "vo": false, "ec": ["all Alliance cards"]}, {"t": "Ming Ren Xuan", "b": "Alliance", "d": "15% off total bill on a la carte food menu (to 31 Dec 2026); the 50% off every second diner on Prestige Tasting Menu ended 30 Sep 2026 (Alliance Visa cards only — Virtual not eligible).", "dt": "1 Jul - 31 Dec 2026", "l": "https://www.alliancebank.com.my/Alliance/media/documents/Promotion/Ming_Ren_Xuan_Credit_Card_Usage_Promotion_Terms_and_Conditions.pdf", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "Ombak Restaurant, Mercure Penang Beach", "b": "Alliance", "d": "15% off total bill with minimum spend RM100 (Alliance Visa cards only — Virtual not eligible).", "dt": "Valid till 30 Dec 2026", "l": "https://www.alliancebank.com.my/Alliance/media/documents/Promotion/mercurepgbeach-Promotion-TC.pdf?ecid=AAFBIGLAVVKRCFBCAENVAKRCV01", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "By the Beach Bar, Mercure Penang Beach", "b": "Alliance", "d": "15% off total bill with minimum spend RM100 (Alliance Visa cards only — Virtual not eligible).", "dt": "Valid till 30 Dec 2026", "l": "https://www.alliancebank.com.my/Alliance/media/documents/Promotion/mercurepgbeach-Promotion-TC.pdf?ecid=AAFBIGLAVVKRCFBCAENVAKRCV01", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "Jade Pavilion, Pavilion Hotel Kuala Lumpur", "b": "Alliance", "d": "15% off dine-in, minimum 2 and maximum 10 diners (Alliance Visa cards only — Virtual not eligible).", "dt": "Valid till 30 Dec 2026", "l": "https://www.alliancebank.com.my/Alliance/media/documents/Promotion/Pavilion-Hotel-KL-Offer-JP-TCY-TC.pdf", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "The Courtyard, Pavilion Hotel Kuala Lumpur", "b": "Alliance", "d": "15% off dine-in, minimum 2 and maximum 10 diners (Alliance Visa cards only — Virtual not eligible).", "dt": "Valid till 30 Dec 2026", "l": "https://www.alliancebank.com.my/Alliance/media/documents/Promotion/Pavilion-Hotel-KL-Offer-JP-TCY-TC.pdf", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "Torito, Banyan Tree Kuala Lumpur", "b": "Alliance", "d": "Dining privilege - check the bank's monthly deals page for mechanics (Alliance Visa cards only — Virtual not eligible).", "dt": "Valid till 30 Dec 2026", "l": "https://www.alliancebank.com.my/promotions/Cards/monthlydeals-promotion", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "Horizon Grill, Banyan Tree Kuala Lumpur", "b": "Alliance", "d": "Dining privilege - check the bank's monthly deals page for mechanics (Alliance Visa cards only — Virtual not eligible).", "dt": "Valid till 30 Dec 2026", "l": "https://www.alliancebank.com.my/promotions/Cards/monthlydeals-promotion", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "Hyatt Centric", "b": "Alliance", "d": "Dining/lifestyle privilege - check the bank's monthly deals page for mechanics (Alliance Visa cards only — Virtual not eligible).", "dt": "Valid till 31 Dec 2026", "l": "https://www.alliancebank.com.my/promotions/Cards/monthlydeals-promotion", "vo": true, "ec": ["Alliance Visa Infinite"]}, {"t": "Shang Palace, Lemon Garden, Zipangu, Lobby Lounge, Arthur's Bar & Grill (Shangri-La Kuala Lumpur)", "b": "AmBank", "d": "10% off total food bill for all AmBank Visa credit cards (premium 25-50% tiers for Visa Infinite/SIGNATURE do not apply to this card)", "dt": "1 Jan - 31 Dec 2026", "l": "https://www.ambank.com.my/promotions/up-to-50-off-food-bill-with-ambank-visa-credit-card-i", "vo": false, "ec": ["all AmBank cards"]}, {"t": "Shang Palace, Cafe TATU, Coffee Terrace, Kozan Teppan-yaki, Oceano Modern Grill, Tepi Laut, Coco Joe (Shangri-La Tanjung Aru & Rasa Ria Kota Kinabalu) and The Eighth (Traders Hotel KL)", "b": "AmBank", "d": "10% off total food bill for all AmBank Visa credit cards (premium 25-50% tiers for Visa Infinite/SIGNATURE do not apply to this card)", "dt": "1 Jan - 31 Dec 2026", "l": "https://www.ambank.com.my/promotions/up-to-50-off-food-bill-with-ambank-visa-credit-card-i", "vo": false, "ec": ["all AmBank cards"]}, {"t": "Smith & Wollensky Kuala Lumpur", "b": "AmBank", "d": "10% off a la carte total dining bill", "dt": "15 Aug 2026 - 31 Jul 2027", "l": "https://ambankspot.com/deal/14122/?source=share", "vo": false, "ec": ["all AmBank cards"]}, {"t": "HWC Coffee", "b": "AmBank", "d": "15% off any normal-priced handcrafted drink via HWC Coffee app with code HWCAM15", "dt": "1 Sep 2026 - 31 Aug 2027", "l": "https://ambankspot.com/deal/14190/15-off-any-normal-priced-handcrafted-drink-via-hwc-coffee-app", "vo": false, "ec": ["all AmBank cards"]}, {"t": "Firewood", "b": "AmBank", "d": "10% off total bill on full-priced food and non-alcoholic drinks, minimum spend RM1,000, dine-in lunch, minimum 2 diners", "dt": "1 Sep 2026 - 31 Dec 2027", "l": "https://ambankspot.com/deal/14182/10-off-total-bill-with-a-minimum-spend-of-rm1000", "vo": false, "ec": ["all AmBank cards"]}, {"t": "Napa Refined", "b": "AmBank", "d": "RM60 off with minimum spend RM400 in a single receipt (Thai Chef's Table experience)", "dt": "15 Aug 2026 - 31 Aug 2027", "l": "https://ambankspot.com/deal/14138/exclusive-thai-chef%e2%80%99s-table-experience-enjoy-rm60-off-with-a-minimum-spend-of-rm400-in-a-single-receipt", "vo": false, "ec": ["all AmBank cards"]}, {"t": "Carousel & Co.", "b": "AmBank", "d": "15% off a la carte dining menu for regular AmBank credit card holders", "dt": "1 Aug 2026 - 31 Jul 2027", "l": "https://ambankspot.com/deal/14126/up-to-30-off-games-experience-tickets-and-20-off%c2%a0%c3%a0-la-carte-menu-dining-experience", "vo": false, "ec": ["all AmBank cards"]}, {"t": "A&W Malaysia (all outlets nationwide excl. KidZania/theme parks/airports)", "b": "Maybank", "d": "RM5 OFF with min spend RM50, dine-in & takeaway", "dt": "1 Aug 2026 - 31 Jul 2027", "l": "https://www.syioknya.com/promotion/a-and-w-maybank-card-promo-rm5-off-august-2026", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Supamala Hotpot", "b": "Maybank", "d": "10% OFF (as listed on Maybank promotions page)", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Pepper Lunch", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Shaburi & Kintan Buffet", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Niki Japanese Dining", "b": "Maybank", "d": "10% OFF ala carte food and drinks", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Ichiu Japanese Dining", "b": "Maybank", "d": "Up to 40% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "PUTIEN", "b": "Maybank", "d": "Up to 10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Din Tai Fung", "b": "Maybank", "d": "Complimentary pineapple cakes", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Nobu Kuala Lumpur", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Fei Fei Crab", "b": "Maybank", "d": "20% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Hock Kee Kopitiam", "b": "Maybank", "d": "8% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "CoolBlog", "b": "Maybank", "d": "Waffle for RM3", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "AIMA Grill Fish Restaurant", "b": "Maybank", "d": "RM15 OFF dining", "dt": "1 Apr 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/908873/1-april-31-december-2026-aima-grill-fish-restaurant-rm15-off-dining-promotion-with-maybank-cards-exclusive-grill-fish-savings-for-cardmembers/", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Movenpick Hotel & Convention Centre KLIA", "b": "Maybank", "d": "20% OFF food and beverage", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Ginger and Jeera Empire Restaurant", "b": "Maybank", "d": "10% OFF total bill (minimum spend RM100, discount capped at RM50 per transaction)", "dt": "1 May 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/908886/1-may-31-december-2026-ginger-and-jeera-empire-restaurant-maybank-cards-10-off-total-bill-promotion-in-malaysia-dining-promotion-with-card-discount-savings/", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Ayam Hijau Town", "b": "Maybank", "d": "RM15 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Samurai Yakiniku", "b": "Maybank", "d": "RM15 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Betty's Midwest Kitchen", "b": "Maybank", "d": "Complimentary soft drink", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "US Pizza", "b": "Maybank", "d": "Complimentary soft drink", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Reban", "b": "Maybank", "d": "Up to 15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Seven Oaks Bakery Cafe", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Pine Coffee", "b": "Maybank", "d": "RM15 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Arunee Thai Kitchen", "b": "Maybank", "d": "RM20 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Dona Bakehouse (KL & JB)", "b": "Maybank", "d": "5% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Pressto", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Yumyuummmm Nasi Dagang", "b": "Maybank", "d": "RM15 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Salang Sayang Restaurant", "b": "Maybank", "d": "RM15 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Nasrom Cafe", "b": "Maybank", "d": "RM15 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Anakdol Pizza", "b": "Maybank", "d": "RM15 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Kapitan Tandoori House", "b": "Maybank", "d": "Complimentary ice blended drink", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Cili Kampung", "b": "Maybank", "d": "Complimentary dessert", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Kenjo Bakery", "b": "Maybank", "d": "Complimentary slice of Swiss roll", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Asia Deli Food Street", "b": "Maybank", "d": "Complimentary ice cream", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Dapur Bakar", "b": "Maybank", "d": "Complimentary chicken set", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Thai Chicken Rice Station", "b": "Maybank", "d": "Complimentary dessert", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Pampas Steakhouse, Old Malaya", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "EST.PRESSO", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Sharetea", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Nasi Lemak Kukus Legend", "b": "Maybank", "d": "Complimentary drink", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Hai Bing Seafood", "b": "Maybank", "d": "Complimentary soft drink", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Hompton by The Beach Penang (Spice Garden Cafe)", "b": "Maybank", "d": "25% OFF at Spice Garden Cafe", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Bangkok Kitchen", "b": "Maybank", "d": "Up to 10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Yogurt Planet", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Kanlax Coffee", "b": "Maybank", "d": "Up to 10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Al-Sultan Restaurant", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Hadramot Village", "b": "Maybank", "d": "20% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Promenade Cafe", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Dynasty Chinese Restaurant", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Battered Fish & Chips, REX KL", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Attic by Raw", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Spillstone Coffee", "b": "Maybank", "d": "15% OFF total bill", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Kind Kones", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Himalaya", "b": "Maybank", "d": "20% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Taman Hati", "b": "Maybank", "d": "Complimentary F&B items", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Link All Day Dining @ Wyndham Grand Bangsar KL", "b": "Maybank", "d": "20% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Imperial Lexis KL (SeaSizzling Weekend Dinner Buffet)", "b": "Maybank", "d": "SeaSizzling Weekend Dinner Buffet Deal (see Maybank page for specifics)", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Restoran Lomak Salai", "b": "Maybank", "d": "10% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Ombak Kitchen", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Hainan Village", "b": "Maybank", "d": "RM10 OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Eggette Lab", "b": "Maybank", "d": "Buy 1, Complimentary 1", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Flamez by Don Cloud Kitchen", "b": "Maybank", "d": "15% OFF", "dt": "dates unverified", "l": "https://maybank2u.com.my/maybank2u/malaysia/en/personal/promotions/promotion_listing.page", "vo": false, "ec": ["all Maybank cards"]}, {"t": "Anak Baba, Brickfields KL", "b": "Public Bank", "d": "20% OFF total bill with min spend RM120 (discount capped at RM60)", "dt": "1 Aug 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/930746/1-august-31-december-2026-anak-baba-x-public-bank-privileges-promotion-enjoy-20-off-dining-in-brickfields-kuala-lumpur-with-pb-cards/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Da Noodle, Eco Palladium JB", "b": "Public Bank", "d": "10% OFF food & beverages with min spend RM50", "dt": "to 31 Dec 2026", "l": "https://www.everydayonsales.com/909457/now-till-31-december-2026-da-noodle-eco-palladium-johor-bahru-pb-dining-privileges-promotion-10-off-food-beverages-with-public-bank-cards-in-johor-bahru/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "G Hotel Gurney, Cafe 168 (Penang)", "b": "Public Bank", "d": "20% OFF buffet & a la carte", "dt": "to 30 Dec 2026", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "G Hotel Kelawai, Spoon (Penang)", "b": "Public Bank", "d": "20% OFF buffet & a la carte", "dt": "to 30 Dec 2026", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Yakiniku Tenshin (Penang)", "b": "Public Bank", "d": "15% OFF total bill", "dt": "to 30 Jun 2027", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Tsukiji Sushi (Penang)", "b": "Public Bank", "d": "10% OFF total bill", "dt": "to 30 Jun 2027", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Wagyu and Rice (Penang)", "b": "Public Bank", "d": "10% OFF total bill", "dt": "to 30 Jun 2027", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Hut Dining Buffet (Penang)", "b": "Public Bank", "d": "15% OFF buffet packages from RM278", "dt": "to 30 Jun 2027", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Christoph's (Penang)", "b": "Public Bank", "d": "15% OFF with RM150 min spend per diner", "dt": "to 30 Nov 2026", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Norm Micro Roastery (Penang)", "b": "Public Bank", "d": "10% OFF with min spend RM150", "dt": "10 Jul 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/930799/10-july-31-december-2026-public-bank-privileges-norm-micro-roastery-10-off-dining-promotion-for-pb-cardmembers-in-penang/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Peninsula House (Penang)", "b": "Public Bank", "d": "10% OFF dine-in with min spend RM300", "dt": "10 Jul 2026 - 31 Dec 2026", "l": "https://www.everydayonsales.com/930790/10-july-31-december-2026-public-bank-privileges-peninsula-house-penang-dine-in-promotion-enjoy-10-off-with-minimum-spend-rm300/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Renaissance Kuala Lumpur Hotel & Convention Centre (Evolution & R Bar)", "b": "Public Bank", "d": "15% dining discount at Evolution & R Bar", "dt": "to 30 Dec 2026", "l": "https://www.everydayonsales.com/917971/now-till-30-december-2026-public-bank-x-renaissance-kuala-lumpur-hotel-convention-centre-15-dining-privileges-at-evolution-r-bar-kuala-lumpur/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Black Tap Craft Burgers & Shakes (Sunway Resort Hotel)", "b": "Public Bank", "d": "10% OFF food & beverages", "dt": "to 30 Dec 2026", "l": "https://www.everydayonsales.com/917980/now-till-30-december-2026-black-tap-craft-burgers-shakes-pb-privileges-10-off-dining-promotion-at-sunway-resort-hotel-bandar-sunway/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Four Points by Sheraton KLCC (The Mesh & Sichuan Kitchen)", "b": "Public Bank", "d": "15% OFF food & beverages", "dt": "to 30 Dec 2026", "l": "https://www.everydayonsales.com/917974/now-till-30-december-2026-public-bank-privileges-at-four-points-by-sheraton-klcc-dining-promotion-with-15-discount-on-food-beverages-in-kuala-lumpur/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "PARKROYAL COLLECTION Kuala Lumpur (Thyme)", "b": "Public Bank", "d": "20% OFF total dining bill at Thyme", "dt": "to 31 Dec 2026", "l": "https://www.everydayonsales.com/875758/now-till-31-december-2026-public-bank-x-parkroyal-collection-kuala-lumpur-dining-privileges-promotion/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "The Pinn (Penang)", "b": "Public Bank", "d": "10% OFF with RM80 minimum spend", "dt": "to 31 Dec 2026", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Sifu Nyonya Cuisine (Penang)", "b": "Public Bank", "d": "Free dessert with RM80 minimum spend", "dt": "to 31 Dec 2026", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Sood by Chef Ton (Penang)", "b": "Public Bank", "d": "10% OFF selected course menus; complimentary house wine with RM800 spend", "dt": "to 31 Dec 2026", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "G Hotels selected outlets (Penang)", "b": "Public Bank", "d": "15% OFF snacks at selected outlets", "dt": "to 30 Dec 2026", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-cardholders-get-up-to-20-off-penang-dining-until-december.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Ocean's Catch, Sheraton Petaling Jaya Hotel", "b": "Public Bank", "d": "PB Privileges seafood dinner buffet deal at Ocean's Catch, Sheraton Petaling Jaya Hotel, when paying with a Public Bank card. Starts today; offer terms on the PB promo page.", "dt": "1 October 2026 – 28 November 2026", "l": "https://www.pbebank.com/en/promotions/latest-promotions/ocean-s-catch-seafood-dinner-buffet-deal-at-sheraton-petaling-jaya-hotel/", "vo": false, "ec": ["all Public Bank cards"], "n": true}], "movies": [{"t": "GSC", "b": "AFFIN", "d": "Buy 1 free 1 Adult 2D / DELUXE ticket — buy online via GSC website/app on Friday or Saturday (usable any screening day; max 1 free ticket/cardholder/day; 100 redemptions/day/cinema; 5,000 total cap). Any AFFIN credit card works; Aurum TRX, Gardens, Mid Valley Southkey JB, Velvet Sunway 163 excluded.", "dt": "17 Apr–31 Oct 2026", "l": "https://www.affinalways.com/storage/ckeditor_uploads/discover_promotion//TC%20(ENG)%20-%20AFFIN%20Credit%20Cards%20Movie%20Campaign%202026%20v2_1776763587.pdf", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "TGV", "b": "AFFIN", "d": "Buy 1 free 1 Adult 2D / DELUXE ticket — buy online via TGV website/app on Friday or Saturday (usable any screening day; TGV MovieClub membership required; max 1 free ticket/cardholder/day; 100 redemptions/day; 5,000 total cap; all TGV locations).", "dt": "17 Apr–31 Oct 2026", "l": "https://www.affinalways.com/storage/ckeditor_uploads/discover_promotion//TC%20(ENG)%20-%20AFFIN%20Credit%20Cards%20Movie%20Campaign%202026%20v2_1776763587.pdf", "vo": false, "ec": ["all AFFIN cards"]}, {"t": "GSC", "b": "Alliance", "d": "50% off 2D Adult tickets at Velvet Theatre — buy via GSC website/app with an Alliance Bank card (incl. Visa Virtual via Samsung/Google Pay); first-come first-served, monthly cap: 300 for Oct 2026 (then 300/month Nov–Dec). 20% off dine-in at Velvet Restaurant with Alliance cards.", "dt": "1 Apr–31 Dec 2026 (extended Sep 2026)", "l": "https://www.gsc.com.my/promotion/50-off-velvet-x-alliance-bank-movie-ticket/", "vo": false, "ec": ["all Alliance cards"]}, {"t": "GSC", "b": "Alliance", "d": "Buy 1 free 1 Premiere Hall 2D ticket every Thursday (select Premiere halls nationwide incl. Gurney Plaza, MyTown, Starling Mall, Tropicana Gardens, Paradigm JB, IOI City Mall 2 East) — buy on Thursday via GSC website/app; usable any screening day; monthly cap: 133 for Oct 2026 (133/month Nov–Dec), first-come first-served.", "dt": "1 Apr–31 Dec 2026 (extended Sep 2026)", "l": "https://www.alliancebank.com.my/About-Us/Media-Centre/Updates-on-Alliance-Bank-X-Golden-Screen-Cinema-Usage-Offer-Campaign", "vo": false, "ec": ["all Alliance cards"]}, {"t": "GSC", "b": "Alliance", "d": "Buy 1 free 1 Standard Hall 2D ticket every Thursday (all GSC outlets) — buy on Thursday via GSC website/app; usable any screening day; monthly cap: 200 for Oct 2026 (200/month Nov–Dec), first-come first-served.", "dt": "1 Apr–31 Dec 2026 (extended Sep 2026)", "l": "https://www.alliancebank.com.my/About-Us/Media-Centre/Updates-on-Alliance-Bank-X-Golden-Screen-Cinema-Usage-Offer-Campaign", "vo": false, "ec": ["all Alliance cards"]}], "travel": [{"t": "Agoda — 25% off hotels (Visa cards)", "b": "CIMB", "d": "Book via Agoda with a CIMB Visa (25%); 7% with other CIMB credit cards incl. E-Card; also Booking.com 7% wallet credit and Traveloka 8% off", "dt": "to 31 Dec 2026 (Traveloka to 24 Dec)", "l": "https://deals.cimb.com/my", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Airline deals — Qatar 10%, EVA 7%, MAS+Enrich 12% + RM100 voucher, Starlux 6% economy", "b": "CIMB", "d": "Discounted fares when paying with CIMB cards; check each airline's promo page for eligible routes", "dt": "various to mid-2027", "l": "https://deals.cimb.com/my", "vo": false, "ec": ["all CIMB cards"]}, {"t": "KLIA Ekspres — 30% off", "b": "CIMB", "d": "Airport train tickets when paying with CIMB cards", "dt": "ongoing", "l": "https://deals.cimb.com/my", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Anantara Vacation Club — 4D3N complimentary Thailand stay", "b": "CIMB", "d": "Complimentary 4D3N Thailand stay (Mai Khao Phuket / Avani+ Khao Lak / Riverside Bangkok) with breakfast for 2 and airport transfers; principal TWE/Travel World cardholders, spend RM10k (TWE) in month of stay; mandatory preview presentation; USD250 non-refundable fee (USD50 waived on stay completion)", "dt": "1 Apr 2026 - 31 Mar 2027", "l": "https://www.cimb.com.my/en/personal/promotions/latest-promotions/cimb-travel-credit-card-anantara.html", "vo": false, "ec": ["all CIMB cards"]}, {"t": "Dusit Thani — 10% off rooms + 10% dining + perks", "b": "Hong Leong", "d": "Book with code VISA2026 using HLB Visa Infinite", "dt": "to 31 Jan 2027", "l": "https://www.hlb.com.my/en/personal-banking/promotions/cards-hlb-card-offers.html?icp=hlb-en-home-midbody-txt-cards-privileges", "vo": false, "ec": ["all Hong Leong cards"]}, {"t": "PB Privileges at InterContinental Kuala Lumpur", "b": "Public Bank", "d": "Stay 3 nights and pay for 2 (code PBBS3, 50% off third night); 30% off a la carte and set menus at Tao Chinese and Tatsu Japanese; 10% off best flexible rates for Quantum and other PB cards", "dt": "now - 30 Dec 2026", "l": "https://www.pbebank.com/media/sszfisl2/tc_pb-privileges-intercontinental-kl.pdf", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "PB Privileges at G Hotel Gurney / G Hotel Kelawai (Penang)", "b": "Public Bank", "d": "15% off Best Available Rates all room categories; 20% off buffet and a la carte at Cafe 168 (Gurney) and Spoon (Kelawai); 15% off snacks", "dt": "now - 30 Dec 2026", "l": "https://www.pbebank.com/media/ieufcjnr/tc_hotel-gurney-kelawai.pdf", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "PB Privileges @ Trip.com — hotels, flights, attractions", "b": "Public Bank", "d": "China hotels / selected worldwide hotels / flights with PB cards; note the separate Visa Infinite/Signature 20% edition (1 Apr–30 Sep) ended", "dt": "7 Aug–31 Dec 2026", "l": "https://www.pbebank.com/en/promotions/latest-promotions/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "MHflypass — RM100 off via Journify", "b": "Public Bank", "d": "Buy MHflypass through Journify with a Public Bank Mastercard; listed on PB's promo page without campaign dates", "dt": "dates unverified", "l": "https://www.pbebank.com/en/promotions/latest-promotions/", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "PB Mastercard x Agoda — 12%/8% off hotel bookings", "b": "Public Bank", "d": "World Mastercard 12% off (cap US$45); Quantum and other PB Mastercard 8% off (cap US$25) on prepaid Agoda bookings via the dedicated promo page", "dt": "bookings to 31 Mar 2027; stays to 31 Dec 2027", "l": "https://ringgitplus.com/en/blog/bank-news/public-bank-mastercard-cardholders-can-get-up-to-12-off-agoda-hotel-bookings.html", "vo": false, "ec": ["all Public Bank cards"]}, {"t": "Visa Infinite x Agoda — up to 33.34% off 3+ night stays", "b": "Alliance", "d": "Up to 33.34% off Agoda bookings on 3+ night stays at 4-star and above hotels (cap US$150/booking); works with Alliance Visa Infinite and Hong Leong Visa Infinite", "dt": "bookings to 31 Dec 2026", "l": "https://suitesmile.com/agoda-credit-card-promotion-singapore/", "vo": false, "ec": ["Alliance Visa Infinite"]}, {"t": "World Elite x Agoda — 16% off hotel bookings", "b": "CIMB", "d": "16% off Agoda hotel bookings (min US$200, cap US$60/booking) via the Mastercard landing page; works with CIMB Travel World Elite", "dt": "bookings to 31 Mar 2027", "l": "https://suitesmile.com/agoda-credit-card-promotion-singapore/", "vo": false, "ec": ["CIMB Travel World Elite"]}, {"t": "Sedunia Travel — extra 5% off prepaid travel packages", "b": "Alliance", "d": "Extra 5% off on top of existing Sedunia Travel deals or bonus perks/rewards on prepaid travel packages with Alliance cards", "dt": "ongoing", "l": "https://seduniatravel.com/promotion/alliance-bank-cardholders/", "vo": false, "ec": ["all Alliance cards"]}, {"t": "Alliance x Klook deal (Visa)", "b": "Alliance", "d": "Klook offers for Alliance Visa cards — check the monthlydeals page for current codes and mechanics", "dt": "to 31 Dec 2026", "l": "https://www.alliancebank.com.my/promotions/Cards/monthlydeals-promotion", "vo": false, "ec": ["all Alliance cards"]}], "signup": [{"t": "HSBC credit card sign-up promotion (via RinggitPlus/CompareHero)", "b": "HSBC", "d": "Apple iPhone 17 Pro (every 38th qualified applicant, capped at 4 units); RM500 Touch 'n Go eWallet Credit guaranteed to others. New customers only; activate + spend RM3,000 in retail transactions within 60 days of approval. Eligible: HSBC Visa Signature, HSBC TravelOne, HSBC Live+", "dt": "28 September 2026 – 19 October 2026", "l": "https://ringgitplus.com/en/credit-card/sign-up-offers/", "s": "RinggitPlus sign-up offers page", "l2": "https://www.comparehero.my/credit-card/?click=featurebox", "vo": false, "ec": ["HSBC Visa Signature", "HSBC TravelOne", "HSBC Live+"]}, {"t": "Alliance Bank credit card sign-up promotion (via RinggitPlus/CompareHero)", "b": "Alliance", "d": "HYROX x PUMA Gym Bag + Cashback Blind Box. New customers only; get approved by 15 November 2026, activate and spend from approval date. Eligible: Alliance Bank Visa Platinum, Visa Infinite, Visa Virtual", "dt": "1 September 2026 – 30 October 2026", "l": "https://ringgitplus.com/en/credit-card/sign-up-offers/", "s": "RinggitPlus sign-up offers page", "l2": "https://www.comparehero.my/credit-card/?click=featurebox", "vo": false, "ec": ["Alliance Visa Platinum", "Alliance Visa Infinite", "Alliance Virtual"]}, {"t": "OCBC credit card sign-up promotion (via RinggitPlus/CompareHero)", "b": "OCBC", "d": "Apple iPhone 17 Pro (every 38th qualified applicant, capped at 3 units); RM600 TNG eWallet guaranteed with balance transfer ≥ RM10,000; RM400 TNG guaranteed with BT < RM10,000; RM200 TNG guaranteed to other qualifiers. New customers only; activate + spend RM100 within 60 days. Eligible: OCBC Cashflo, 90°N, 365, Titanium Pink, Titanium Blue", "dt": "14 September 2026 – 5 October 2026", "l": "https://ringgitplus.com/en/credit-card/sign-up-offers/", "s": "RinggitPlus sign-up offers page", "l2": "https://www.comparehero.my/credit-card/?click=featurebox", "vo": false, "ec": ["OCBC Cashflo", "OCBC 90°N", "OCBC 365", "OCBC Titanium Pink", "OCBC Titanium Blue"]}, {"t": "UOB credit card sign-up promotion (via RinggitPlus/CompareHero)", "b": "UOB", "d": "Apple iPad Pro M5 (3 top retail spenders by 17 Jan 2027, capped at 3 units); RM300 TNG eWallet guaranteed for Visa Infinite / PRVI Miles Elite / World / Lady's Solitaire / Platinum Business applicants; RM188 TNG guaranteed for Preferred / Lady's / ONE / EVOL / Lazada UOB / Simple applicants. New customers only; approved by 18 Nov 2026; activate + spend RM400 (premium cards) or RM200 (other cards) within 60 days", "dt": "28 September 2026 – 19 October 2026", "l": "https://ringgitplus.com/en/credit-card/sign-up-offers/", "s": "RinggitPlus sign-up offers page", "l2": "https://www.comparehero.my/credit-card/?click=featurebox", "vo": false, "ec": ["UOB Visa Infinite", "UOB PRVI Miles Elite", "UOB World", "UOB Lady's Solitaire", "UOB Platinum Business", "UOB Preferred", "UOB Lady's", "UOB ONE", "UOB EVOL", "Lazada UOB", "UOB Simple"]}, {"t": "UOB direct new-to-bank welcome offers", "b": "UOB", "d": "RM88 cashback welcome gift when applying for UOB Simple Card. Separately, New-to-Bank customers get 1st-year annual fee waiver on UOB Visa Infinite, Lady's Solitaire, Lady's Platinum, PRVI Miles Elite, World, Preferred, and 2-year waiver on UOB ONE Platinum, Lazada UOB, EVOL, Platinum Business", "dt": "to 31 December 2026", "l": "https://www.uob.com.my/personal/cards/credit-cards/uob-simple.page?TRILIBIS_EMULATOR_UA=Mozilla%2F5.0+%28Windows+NT+6.1-2-1", "s": "uob.com.my", "l2": "", "vo": false, "ec": ["UOB Simple", "UOB Visa Infinite", "UOB Lady's Solitaire", "UOB Lady's Platinum", "UOB PRVI Miles Elite", "UOB World", "UOB Preferred", "UOB ONE Platinum", "Lazada UOB", "UOB EVOL", "UOB Platinum Business"]}, {"t": "Maybank credit card sign-up promotion (via RinggitPlus/CompareHero)", "b": "Maybank", "d": "Sony PlayStation 5 Digital Slim (every 40th qualified applicant, capped at 1 unit). New customers only; activate + spend RM300 in retail transactions within 30 days of approval. Eligible: Maybank World Elite Mastercard, Maybank Islamic Ikhwan Platinum/Gold/-i, Maybank 2 Gold/2 Platinum Cards, Cash Back Mastercard Platinum", "dt": "28 September 2026 – 12 October 2026", "l": "https://ringgitplus.com/en/credit-card/sign-up-offers/", "s": "RinggitPlus sign-up offers page", "l2": "https://www.comparehero.my/credit-card/?click=featurebox", "vo": false, "ec": ["Maybank World Elite Mastercard", "Maybank Islamic Ikhwan Platinum", "Maybank Islamic Ikhwan Gold", "Maybank 2 Gold Cards", "Maybank 2 Platinum Cards", "Maybank Cash Back Mastercard Platinum"]}, {"t": "AmBank credit card sign-up promotion (via RinggitPlus/CompareHero)", "b": "AmBank", "d": "RM1,888 TNG eWallet Credit (every 38th qualified applicant, capped at 5 units); RM200 TNG guaranteed for Visa Signature/ Visa Infinite/-i / BonusLink Visa Signature applicants; RM100 TNG guaranteed for Cash Rebate Visa Platinum / BonusLink Visa Platinum / Visa Platinum CARz-i / Visa Platinum / Visa Platinum-i / UnionPay Platinum applicants. New customers only; approved + activated by 2 Dec 2026, spend RM400 (Signature/Infinite tier) or RM200 (Platinum tier) within 60 days", "dt": "28 September 2026 – 2 November 2026", "l": "https://ringgitplus.com/en/credit-card/sign-up-offers/", "s": "RinggitPlus sign-up offers page", "l2": "https://www.comparehero.my/credit-card/?click=featurebox", "vo": false, "ec": ["AmBank Visa Signature", "AmBank Visa Infinite", "AmBank BonusLink Visa Signature", "AmBank Cash Rebate Visa Platinum", "AmBank BonusLink Visa Platinum", "AmBank Visa Platinum CARz", "AmBank Visa Platinum", "AmBank UnionPay Platinum"]}, {"t": "RHB Apply & Spend Campaign (bank-direct)", "b": "RHB", "d": "RM25 cashback when you activate the new RHB Credit Card/-i and spend any amount within 60 days; stand to get RM200 cashback by applying, spending or taking up an instalment to earn entries within 60 days", "dt": "1 July 2026 – 31 December 2026", "l": "https://rhbgroup.com/applyandspendcard/index.html", "s": "rhbgroup.com Apply & Spend Campaign page", "l2": "", "vo": false, "ec": ["all RHB cards"]}, {"t": "RHB Smart Move Balance Transfer Campaign", "b": "RHB", "d": "Balance transfer from 4.88% p.a., min transfer RM1,000, max subject to bank criteria. New RHB Credit Card/-i applicants can pair this with acquisition", "dt": "to 31 December 2026", "l": "https://ringgitplus.com/en/credit-card/RHB-Cash-Back-Visa-Credit-Card.html?utm_source=involveasia&utm_medium=12551-019e76ffc1cc7e50b8bd952d2f9f8636&transaction_id=019e76ffc1cc7e50b8bd952d2f9f8636&offer_id=102934", "s": "RinggitPlus RHB card page", "l2": "", "vo": false, "ec": ["all RHB cards"]}, {"t": "BSN Activate, Spend & Get RM50 Cash Back", "b": "BSN", "d": "RM50 cashback for the first 900 eligible cardholders: new principal BSN Credit Card/-i applicants approved during campaign, or existing unactivated principal cardholders with SMS invite; activate + single retail spend ≥ RM100. E-wallet reloads count; cash advances, BT, instalment plans excluded", "dt": "1 September 2026 – 30 November 2026", "l": "https://ringgitplus.com/en/blog/bank-news/bsn-offers-rm50-cashback-to-eligible-credit-cardholders.html", "s": "RinggitPlus bank-news blog", "l2": "", "vo": false, "ec": ["all BSN cards"]}, {"t": "AmBank BonusLink Visa welcome offer — up to 45,000 BonusLink Points (bank-direct)", "b": "AmBank", "d": "New round from today: new-to-card customers applying for a principal AmBank BonusLink Visa Signature or BonusLink Visa Platinum Credit Card can earn a welcome offer of up to 45,000 BonusLink Points. Previous round ended 30 Sep 2026.", "dt": "1 October 2026 – 31 March 2027", "l": "https://www.ambank.com.my/promotions/bonuslink-credit-card-promo", "s": "ambank.com.my promotions", "l2": "", "vo": false, "n": true, "ec": ["AmBank BonusLink Visa Signature", "AmBank BonusLink Visa Platinum"]}, {"t": "AmBank Visa online application — RM100 Cashback (bank-direct)", "b": "AmBank", "d": "New round from today: apply online for an AmBank Visa Credit Card/-i and get RM100 cashback; eligible spend transactions must be made within 60 days of card approval. Previous round ended 30 Sep 2026.", "dt": "1 October 2026 – 31 March 2027", "l": "https://www.ambank.com.my/promotions/Cashback-Acquisition-Campaign", "s": "ambank.com.my promotions", "l2": "", "vo": false, "n": true, "ec": ["all AmBank cards"]}], "extra": [{"t": "Maybank spend contest — RM10,000 travel voucher grand prize", "b": "Maybank", "d": "Spend ≥RM1,000/month on a Maybank card (1 Oct–31 Dec 2026) for entries; grand prize is a RM10,000 travel voucher. Tied to the new Cash Back Mastercard Platinum launch; details via RinggitPlus (Maybank's promo page is back up after a 5-day outage).", "dt": "1 Oct–31 Dec 2026", "l": "https://www.maybank2u.com.my/", "s": "RinggitPlus", "ec": ["all Maybank cards"]}, {"t": "HLB iPhone 18 Pro accessories voucher promo", "b": "Hong Leong", "d": "Spend ≥RM5,499 single receipt on iPhone 18 Pro/Pro Max via HLB 0% EPP at Switch, Urban Republic or Machines → RM300 accessories voucher (FCFS); ≥RM5,000 on other Apple products → RM200 voucher.", "dt": "12 Sep–31 Oct 2026", "l": "https://www.hlb.com.my/", "ec": ["all Hong Leong cards"]}, {"t": "PB Privileges @ 100glasses", "b": "Public Bank", "d": "PB Privileges offer at 100glasses (eyewear eCommerce) when paying with a Public Bank card. Starts today; offer terms on the PB promo page.", "dt": "1 October 2026 – 31 March 2027", "l": "https://www.pbebank.com/en/promotions/latest-promotions/pb-privileges-100glasses/", "s": "pbebank.com", "ec": ["all Public Bank cards"], "n": true}]};
+
+var MON = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+var BANKC = {"AFFIN":"#b3122f","Alliance":"#0b5cad","AmBank":"#c2410c","CIMB":"#c8102e",
+  "Hong Leong":"#0a6c4f","Maybank":"#8a6d00","Public Bank":"#0b3d91",
+  "HSBC":"#4a4a4a","UOB":"#0f4c81","OCBC":"#a3121f","RHB":"#00539f","BSN":"#5b6470",
+  "Standard Chartered":"#0a6c4f","Bank Islam":"#5b6470","AEON":"#7a3ea1"};
+var BANKS = {"Hong Leong":"HLB"};
+var HELD = ["AFFIN","Alliance","AmBank","CIMB","Hong Leong","Maybank","Public Bank"];
+
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function bankShort(b){ return BANKS[b] || b; }
+function verifiedOnly(arr){ return arr.filter(function(o){ return !/^dates unverified$/i.test(String((o&&o.dt)||"")); }); }
+function parseEnd(s){
+  var m = /(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})/.exec(String(s||"").split(/(?:–|—|\bto\b|-)/).pop());
+  if(!m) return null;
+  var mi = MON[m[2].slice(0,3).toLowerCase()];
+  if(mi==null) return null;
+  var d = new Date(+m[3], mi, +m[1]); d.setHours(0,0,0,0); return d;
+}
+function today0(){ var t = new Date(); t.setHours(0,0,0,0); return t; }
+function urgClass(dt){
+  var d = parseEnd(dt); if(!d) return "";
+  var days = Math.round((d - today0()) / 864e5);
+  return days <= 7 ? "urgent" : days <= 30 ? "soon" : "";
+}
+function daysLeft(dt){
+  var d = parseEnd(dt); if(!d) return null;
+  return Math.round((d - today0()) / 864e5);
+}
+function datePill(dt){
+  var dl = daysLeft(dt);
+  if(dl == null) return '<span class="datepill">NA</span>';
+  var cls = dl <= 7 ? "urgent" : dl <= 30 ? "soon" : "";
+  var label;
+  if(dl < 0) label = "ended";
+  else if(dl === 0) label = "ends today";
+  else if(dl === 1) label = "ends tomorrow";
+  else if(dl <= 30) label = "ends in " + dl + "d";
+  else { var d = parseEnd(dt); label = "📅 " + d.getDate() + " " + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]; }
+  return '<span class="datepill ' + cls + '">' + esc(label) + "</span>";
+}
+function fullRange(dt){
+  // show the campaign's full date range inside the expanded card body
+  return String(dt || "NA");
+}
+function oneLiner(d){ return String(d||"").split(/(?<=[.!?])\s|;/)[0].slice(0,140); }
+
+var state = {tab:"briefing", q:"", bank:{dining:{},movies:{},travel:{}}, my:{dining:false,movies:false,travel:false}};
+
+function allPromos(){ return DB.dining.concat(DB.movies, DB.travel, DB.signup, DB.extra||[]); }
+function shownPromos(){ return verifiedOnly(allPromos()); }
+
+function cardHTML(o){
+  var h = '<article class="card" data-t="'+esc(o.t)+'">'
+    + '<button class="cardhead" aria-expanded="false">'
+    + '<span class="topline"><span class="ct">' + (o.n?'<span class="tagnew">NEW</span> ':'') + esc(o.t) + '</span>'
+    + '<span class="chev">›</span></span>'
+    + '<span class="ones">'+esc(oneLiner(o.d))+'</span>'
+    + '<span class="metarow">'
+    + '<span class="bankchip" style="--bc:'+(BANKC[o.b]||"#5b6470")+'">'+esc(bankShort(o.b))+'</span>'
+    + datePill(o.dt)
+    + (o.vo?'<span class="tagwarn">⚠️ Alliance Virtual not eligible</span>':'')
+    + (o.ec && o.ec.length ? '<span class="elig">💳 ' + esc(o.ec.join(", ")) + '</span>' : '')
+    + '</span></button>'
+    + '<div class="cardbody"><div class="cbin"><div class="full">'+esc(o.d)+'</div>'
+    + '<div class="daterange">🗓️ '+esc(fullRange(o.dt))+'</div>';
+  if(o.l) h += '<div><a href="'+esc(o.l)+'" target="_blank" rel="noopener">Open offer →</a></div>';
+  if(o.l2) h += '<div style="margin-top:6px"><a href="'+esc(o.l2)+'" target="_blank" rel="noopener">CompareHero channel →</a></div>';
+  if(o.s) h += '<div class="src">via '+esc(o.s)+'</div>';
+  h += '</div></div></article>';
+  return h;
+}
+
+function bindCards(root){
+  root.querySelectorAll(".cardhead").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var c = btn.closest(".card");
+      c.classList.toggle("open");
+      btn.setAttribute("aria-expanded", c.classList.contains("open") ? "true" : "false");
+    });
+  });
+}
+
+function matchQ(o, q){
+  if(!q) return true;
+  var s = (o.t+" "+o.b+" "+o.d).toLowerCase();
+  return q.toLowerCase().split(/\s+/).every(function(w){ return s.indexOf(w) > -1; });
+}
+function sortSoon(a, b){
+  var da = parseEnd(a.dt), db = parseEnd(b.dt);
+  if(da && db) return da - db;
+  return da ? -1 : db ? 1 : 0;
+}
+function sortAZ(a, b){ return String(a.t).localeCompare(String(b.t)); }
+
+function finderData(key){
+  var arr = verifiedOnly(DB[key]);
+  var q = state.q;
+  if(state.my[key]) arr = arr.filter(function(o){ return HELD.indexOf(o.b) > -1; });
+  var bs = state.bank[key]; if(bs && Object.keys(bs).length) arr = arr.filter(function(o){ return bs[o.b]; });
+  arr = arr.filter(function(o){ return matchQ(o, q); });
+  var mode = document.getElementById(key+"-sort").value;
+  arr.sort(mode === "az" ? sortAZ : sortSoon);
+  return arr;
+}
+
+function chipsHTML(key, banks){
+  var h = "";
+  banks.forEach(function(b){
+    h += '<button class="bchip'+(state.bank[key][b]?" on":"")+'" data-k="'+key+'" data-b="'+esc(b)+'">'
+      + '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(BANKC[b]||"#5b6470")+';margin-right:6px"></span>'
+      + esc(bankShort(b)) + '</button>';
+  });
+  h += '<button class="bchip my'+(state.my[key]?" on":"")+'" data-k="'+key+'" data-my="1">✓ My banks</button>';
+  if(Object.keys(state.bank[key]).length || state.my[key]) h += '<button class="bchip clear" data-k="'+key+'" data-clear="1">✕ Clear</button>';
+  return h;
+}
+
+function renderFinder(key, groupBy){
+  var arr = finderData(key);
+  var total = DB[key].length;
+  document.getElementById(key+"-chips").innerHTML = chipsHTML(key,
+    Array.from(new Set(DB[key].map(function(o){ return o.b; }))).sort());
+  document.getElementById(key+"-count").textContent =
+    arr.length + " shown · " + total + " tracked";
+  var list = document.getElementById(key+"-list");
+  if(!arr.length){ list.innerHTML = '<div class="empty">No promos match. Try clearing the search or filters.</div>'; return; }
+  if(groupBy){
+    var groups = {}, order = [];
+    arr.forEach(function(o){ var g = o.t; if(!groups[g]){ groups[g] = []; order.push(g); } groups[g].push(o); });
+    var h = "";
+    order.forEach(function(g){
+      var items = groups[g].slice().sort(sortSoon);
+      var soonPill = datePill(items[0].dt);
+      var gid = "g-" + key + "-" + order.indexOf(g);
+      h += '<div class="group'+(state.q?" open":"")+'" id="'+gid+'">'
+        + '<button class="ghead" aria-expanded="'+(state.q?"true":"false")+'">'
+        + '<span class="gt">'+esc(g)+'</span>'
+        + '<span class="gcount">'+items.length+'</span>' + soonPill
+        + '<span class="chev">›</span></button>'
+        + '<div class="gbody">' + items.map(cardHTML).join("") + '</div></div>';
+    });
+    list.innerHTML = h;
+    list.querySelectorAll(".ghead").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var g = btn.closest(".group"); g.classList.toggle("open");
+        btn.setAttribute("aria-expanded", g.classList.contains("open") ? "true" : "false");
+      });
+    });
+  } else {
+    list.innerHTML = arr.map(cardHTML).join("");
+  }
+  bindCards(list);
+}
+
+function renderSignup(){
+  var q = state.q, mode = document.getElementById("signup-sort").value;
+  var arr = verifiedOnly(DB.signup).filter(function(o){ return matchQ(o, q); });
+  arr.sort(mode === "az" ? sortAZ : sortSoon);
+  document.getElementById("signup-count").textContent = arr.length + " of " + DB.signup.length + " campaigns";
+  var list = document.getElementById("signup-list");
+  if(!arr.length){ list.innerHTML = '<div class="empty">No sign-up offers match.</div>'; return; }
+  var groups = {}, order = [];
+  arr.forEach(function(o){ if(!groups[o.b]){ groups[o.b] = []; order.push(o.b); } groups[o.b].push(o); });
+  var h = "";
+  order.forEach(function(b){
+    var items = groups[b];
+    h += '<div class="group open"><button class="ghead" aria-expanded="true">'
+      + '<span class="gt">'+esc(bankShort(b))+' <span style="font-weight:600;color:var(--ink2)">'+esc(b)+'</span></span>'
+      + '<span class="gcount">'+items.length+'</span><span class="chev">›</span></button>'
+      + '<div class="gbody">' + items.map(cardHTML).join("") + '</div></div>';
+  });
+  list.innerHTML = h;
+  list.querySelectorAll(".ghead").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var g = btn.closest(".group"); g.classList.toggle("open");
+      btn.setAttribute("aria-expanded", g.classList.contains("open") ? "true" : "false");
+    });
+  });
+  bindCards(list);
+}
+
+function renderBriefing(){
+  var fresh = shownPromos().filter(function(o){ return o.n; });
+  var ending = shownPromos().filter(function(o){ return urgClass(o.dt) !== ""; })
+    .sort(sortSoon).slice(0, 14);
+  document.getElementById("st-new").textContent = fresh.length;
+  document.getElementById("st-end").textContent = shownPromos().filter(function(o){ return urgClass(o.dt) !== ""; }).length;
+  document.getElementById("st-all").textContent = allPromos().length;
+
+  var bdg = document.getElementById("bdg-briefing");
+  if(fresh.length){ bdg.hidden = false; bdg.textContent = fresh.length; } else { bdg.hidden = true; }
+
+  var fr = document.getElementById("fresh");
+  fr.innerHTML = fresh.length ? fresh.map(cardHTML).join("") : '<div class="empty">Nothing new since the last check.</div>';
+  bindCards(fr);
+
+  var en = document.getElementById("ending");
+  en.innerHTML = ending.length ? ending.map(function(o){
+    return '<button class="erow" data-goto-tab="'+(DB.dining.indexOf(o)>-1?"dining":DB.movies.indexOf(o)>-1?"movies":DB.travel.indexOf(o)>-1?"travel":"signup")+'">'
+      + '<span class="et">'+(o.n?'<span class="tagnew">NEW</span> ':'')+esc(o.t)+'<small>'+esc(bankShort(o.b))+' · '+esc(oneLiner(o.d))+'</small></span>'
+      + datePill(o.dt) + '</button>';
+  }).join("") : '<div class="empty">Nothing ending in the next 30 days.</div>';
+  en.querySelectorAll(".erow").forEach(function(b){
+    b.addEventListener("click", function(){ switchTab(b.getAttribute("data-goto-tab")); });
+  });
+
+  // briefing search: flat results across every array
+  var rs = document.getElementById("sec-results"), rl = document.getElementById("results");
+  var q2 = state.q.trim();
+  if(q2){
+    var hits = shownPromos().filter(function(o){ return matchQ(o, q2); }).sort(sortSoon).slice(0, 40);
+    rs.hidden = false;
+    rl.innerHTML = hits.length ? hits.map(cardHTML).join("")
+      : '<div class="empty">No promos match "'+esc(q2)+'".</div>';
+    bindCards(rl);
+    ["sec-fresh","sec-ending"].forEach(function(id){ document.getElementById(id).style.display = "none"; });
+    document.querySelector(".stats").style.display = "none";
+  } else {
+    rs.hidden = true;
+    ["sec-fresh","sec-ending"].forEach(function(id){ document.getElementById(id).style.display = ""; });
+    document.querySelector(".stats").style.display = "";
+  }
+}
+
+function renderBadges(){
+  var vc = function(k){ return verifiedOnly(DB[k]).length; };
+  var set = function(id, n){ var e = document.getElementById(id); e.textContent = n; };
+  set("bdg-dining", vc("dining")); set("bdg-movies", vc("movies"));
+  set("bdg-travel", vc("travel")); set("bdg-signup", vc("signup"));
+}
+
+var PH = {briefing:"Search all promos…", dining:"Search restaurants… (e.g. sushi, Starbucks)",
+  movies:"Search cinemas… (e.g. GSC, TGV)", travel:"Search flights, hotels… (e.g. Agoda, MAS)",
+  signup:"Search banks or gifts… (e.g. iPhone, HSBC)"};
+
+function switchTab(name){
+  state.tab = name; state.q = "";
+  document.getElementById("q").value = "";
+  document.getElementById("qclear").classList.remove("on");
+  document.getElementById("q").placeholder = PH[name];
+  document.querySelectorAll(".tabbtn").forEach(function(b){
+    var on = b.getAttribute("data-tab") === name;
+    b.classList.toggle("on", on); b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  document.querySelectorAll(".view").forEach(function(v){
+    v.classList.toggle("on", v.id === "view-" + name);
+  });
+  renderAll();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function renderAll(){
+  renderBriefing(); renderBadges();
+  renderFinder("dining", true); renderFinder("movies", false); renderFinder("travel", false);
+  renderSignup();
+}
+
+document.querySelectorAll(".tabbtn").forEach(function(b){
+  b.addEventListener("click", function(){ switchTab(b.getAttribute("data-tab")); });
+});
+document.querySelectorAll("[data-goto]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var el = document.getElementById(b.getAttribute("data-goto"));
+    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+});
+document.querySelector(".sec-h .more").addEventListener("click", function(){ switchTab("travel"); });
+
+var q = document.getElementById("q"), qclear = document.getElementById("qclear");
+q.addEventListener("input", function(){
+  state.q = q.value.trim();
+  qclear.classList.toggle("on", !!q.value);
+  renderAll();
+});
+qclear.addEventListener("click", function(){
+  q.value = ""; state.q = ""; qclear.classList.remove("on"); renderAll(); q.focus();
+});
+document.querySelectorAll(".fsort").forEach(function(s){
+  s.addEventListener("change", renderAll);
+});
+document.addEventListener("click", function(e){
+  var c = e.target.closest(".bchip"); if(!c) return;
+  var k = c.getAttribute("data-k");
+  if(c.hasAttribute("data-clear")){ state.bank[k] = {}; state.my[k] = false; }
+  else if(c.hasAttribute("data-my")){ state.my[k] = !state.my[k]; }
+  else { var bb = c.getAttribute("data-b"); if(state.bank[k][bb]) delete state.bank[k][bb]; else state.bank[k][bb] = 1; }
+  renderAll();
+});
+
+(function init(){
+  var m = DB.meta || {};
+  // dark mode: restore saved choice
+  try{ var th = localStorage.getItem("mb-theme"); if(th === "dark") document.documentElement.setAttribute("data-theme", "dark"); }catch(e){}
+  var tbtn = document.getElementById("themebtn");
+  function syncTbtn(){ tbtn.textContent = document.documentElement.getAttribute("data-theme") === "dark" ? "☀️" : "🌙"; }
+  syncTbtn();
+  tbtn.addEventListener("click", function(){
+    var dark = document.documentElement.getAttribute("data-theme") !== "dark";
+    if(dark) document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+    try{ localStorage.setItem("mb-theme", dark ? "dark" : ""); }catch(e){}
+    syncTbtn();
+  });
+  // dateline + updated stamp
+  var dl = (m.weekday ? m.weekday + ", " : "") + (m.date || "");
+  if(m.updated) dl += " · updated " + m.updated;
+  document.getElementById("dateline").textContent = dl;
+  // stale digest banner: digest date is before today
+  var t0 = today0(), stale = false;
+  if(m.date){
+    var p = String(m.date).split(" ");
+    var mi = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].indexOf(p[1]);
+    if(p.length === 3 && mi > -1){
+      var dd = new Date(+p[2], mi, +p[0]);
+      if(!isNaN(dd) && dd < t0) stale = true;
+    }
+  }
+  if(stale){
+    var b = document.getElementById("stalebanner");
+    b.hidden = false;
+    b.textContent = "⚠️ This digest is from " + m.date + " — today's run hasn't landed yet.";
+  }
+  document.getElementById("q").placeholder = PH.briefing;
+  // dining expand-all / collapse-all
+  var xbtn = document.getElementById("dining-expand");
+  xbtn.addEventListener("click", function(){
+    var list = document.getElementById("dining-list");
+    var closed = list.querySelector(".group:not(.open)");
+    list.querySelectorAll(".group").forEach(function(g){
+      g.classList.toggle("open", !!closed);
+      var h = g.querySelector(".ghead"); if(h) h.setAttribute("aria-expanded", !!closed);
+    });
+    xbtn.textContent = closed ? "Collapse all" : "Expand all";
+  });
+  renderAll();
+})();
+</script>
+</body>
+</html>
