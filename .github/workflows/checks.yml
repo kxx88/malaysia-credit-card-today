@@ -1,0 +1,51 @@
+name: Site checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"        # 14:00 Kuala Lumpur, about three hours after the daily update
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2       # the guard compares with the previous commit
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install test tools
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          npm install --no-save axe-core
+
+      - name: Guard rails (data date, offer counts, ended offers)
+        run: python ci/check_freshness.py index.html ${{ github.event_name == 'schedule' && '--stale' || '' }}
+
+      - name: Fixes A1-B4
+        run: python ci/verify_fixes.py index.html
+
+      - name: Fixes C1-F2 and the offline page
+        run: python ci/verify_fixes_2.py .
+
+      - name: Accessibility scan
+        run: python ci/axe_scan.py .
+
+      - name: Staging copy (only if it exists)
+        if: ${{ hashFiles('staging/index.html') != '' }}
+        run: python ci/verify_fixes_2.py staging
